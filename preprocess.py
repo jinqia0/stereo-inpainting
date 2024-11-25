@@ -1,5 +1,6 @@
 from transformers import pipeline
 import os
+import argparse
 import numpy as np
 from PIL import Image
 import open3d as o3d
@@ -88,12 +89,17 @@ def preprocess_and_save(input_dir, debug=False):
 
                 if debug:
                     return
+    
+    return
 
 
 def main():
-    input_dir = 'dataset/Monkaa'
+    parser = argparse.ArgumentParser(description="Preprocess and save dataset.")
+    parser.add_argument("input_dir", type=str, help="Path to the input dataset directory.")
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode.")
 
-    preprocess_and_save(input_dir, debug=False)
+    args = parser.parse_args()
+    preprocess_and_save(args.input_dir, args.debug)
 
 
 if __name__ == '__main__':
