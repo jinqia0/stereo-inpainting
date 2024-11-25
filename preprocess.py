@@ -15,12 +15,6 @@ def create_dirs(base_dir, sub_dirs):
     return paths
 
 
-def resize_image(image, size):
-    """调整图像大小"""
-    transform_resize = transforms.Resize((size[1], size[0]))
-    return transform_resize(image)
-
-
 def save_image(image, path, mode="RGB"):
     """保存 PIL 图像"""
     try:
@@ -29,7 +23,7 @@ def save_image(image, path, mode="RGB"):
         print(f"Failed to save image at {path}: {e}")
 
 
-def preprocess_and_save(input_dir, size=(432, 240), debug=False):
+def preprocess_and_save(input_dir, debug=False):
     """
     批量预处理存放左右帧图片的文件夹。
 
@@ -100,9 +94,8 @@ def preprocess_and_save(input_dir, size=(432, 240), debug=False):
 
 def main():
     input_dir = '/home/qiao/T-SVG/Monkaa'
-    size = (432, 240)
 
-    preprocess_and_save(input_dir, size=size, debug=True)
+    preprocess_and_save(input_dir, debug=True)
 
 
 if __name__ == '__main__':
