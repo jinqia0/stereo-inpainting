@@ -29,8 +29,6 @@ def preprocess_and_save(input_dir, debug=False):
 
     Args:
         input_dir (str): 输入文件夹路径，包含左右视角帧的子文件夹。
-        output_dir (str): 输出文件夹路径，保存预处理后的图像。
-        size (tuple): 图像预处理目标尺寸 (宽, 高)。
     """
     # 初始化深度估计模型
     try:
@@ -93,9 +91,9 @@ def preprocess_and_save(input_dir, debug=False):
 
 
 def main():
-    input_dir = '/home/qiao/T-SVG/Monkaa'
+    input_dir = 'dataset/Monkaa'
 
-    preprocess_and_save(input_dir, debug=True)
+    preprocess_and_save(input_dir, debug=False)
 
 
 if __name__ == '__main__':
