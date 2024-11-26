@@ -2,7 +2,7 @@
 Personal
 #############################################################
 .vscode/
-weights/
+weights
 results/
 dataset
 

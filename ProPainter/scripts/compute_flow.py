@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys 
-sys.path.append(".") 
+sys.path.append("/root/autodl-tmp/stereo-inpainting/ProPainter")
+sys.path.append("/root/autodl-tmp/stereo-inpainting") 
 
 import os
 import cv2
@@ -16,12 +17,21 @@ from utils.flow_util import *
 
 
 def initialize_RAFT(model_path='weights/raft-things.pth', device='cuda'):
-    """Initializes the RAFT model."""
-    model = torch.nn.DataParallel(RAFT())
-    model.load_state_dict(torch.load(model_path))
+    """Initializes the RAFT model.
+    """
+    args = argparse.ArgumentParser()
+    args.raft_model = model_path
+    args.small = False
+    args.mixed_precision = False
+    args.alternate_corr = False
+
+    model = torch.nn.DataParallel(RAFT(args))
+    model.load_state_dict(torch.load(args.raft_model))
+
     model = model.module
     model.to(device)
     model.eval()
+
     return model
 
 
