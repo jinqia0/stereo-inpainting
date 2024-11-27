@@ -79,7 +79,7 @@ class BidirectionalPropagation(nn.Module):
         self.learnable = learnable
 
         if self.learnable:
-            for i, module in enumerate(self.prop_list):
+            for module in self.prop_list:
                 self.deform_align[module] = DeformableAlignment(
                     channel, channel, 3, padding=1, deform_groups=16)
 
@@ -102,6 +102,7 @@ class BidirectionalPropagation(nn.Module):
         return mask.to(mask)
 
     def forward(self, x, flows_forward, flows_backward, mask, interpolation='bilinear'):
+        # sourcery skip: low-code-quality
         """
         x shape : [b, t, c, h, w]
         return [b, t, c, h, w]
@@ -112,8 +113,8 @@ class BidirectionalPropagation(nn.Module):
         # pred_flows_backward for forward feature propagation
         b, t, c, h, w = x.shape
         feats, masks = {}, {}
-        feats['input'] = [x[:, i, :, :, :] for i in range(0, t)]
-        masks['input'] = [mask[:, i, :, :, :] for i in range(0, t)]
+        feats['input'] = [x[:, i, :, :, :] for i in range(t)]
+        masks['input'] = [mask[:, i, :, :, :] for i in range(t)]
 
         prop_list = ['backward_1', 'forward_1']
         cache_list = ['input'] +  prop_list
@@ -122,14 +123,13 @@ class BidirectionalPropagation(nn.Module):
             feats[module_name] = []
             masks[module_name] = []
 
+            frame_idx = range(t)
             if 'backward' in module_name:
-                frame_idx = range(0, t)
                 frame_idx = frame_idx[::-1]
                 flow_idx = frame_idx
                 flows_for_prop = flows_forward
                 flows_for_check = flows_backward
             else:
-                frame_idx = range(0, t)
                 flow_idx = range(-1, t - 1)
                 flows_for_prop = flows_backward
                 flows_for_check = flows_forward
@@ -144,22 +144,22 @@ class BidirectionalPropagation(nn.Module):
                 else:
                     flow_prop = flows_for_prop[:, flow_idx[i], :, :, :]
                     flow_check = flows_for_check[:, flow_idx[i], :, :, :]
-                    flow_vaild_mask = fbConsistencyCheck(flow_prop, flow_check)
+                    flow_valid_mask = fbConsistencyCheck(flow_prop, flow_check)
                     feat_warped = flow_warp(feat_prop, flow_prop.permute(0, 2, 3, 1), interpolation)
 
                     if self.learnable:
-                        cond = torch.cat([feat_current, feat_warped, flow_prop, flow_vaild_mask, mask_current], dim=1)
+                        cond = torch.cat([feat_current, feat_warped, flow_prop, flow_valid_mask, mask_current], dim=1)
                         feat_prop = self.deform_align[module_name](feat_prop, cond, flow_prop)
                         mask_prop = mask_current
                     else:
                         mask_prop_valid = flow_warp(mask_prop, flow_prop.permute(0, 2, 3, 1))
                         mask_prop_valid = self.binary_mask(mask_prop_valid)
 
-                        union_vaild_mask = self.binary_mask(mask_current*flow_vaild_mask*(1-mask_prop_valid))
-                        feat_prop = union_vaild_mask * feat_warped + (1-union_vaild_mask) * feat_current
+                        union_valid_mask = self.binary_mask(mask_current*flow_valid_mask*(1-mask_prop_valid))
+                        feat_prop = union_valid_mask * feat_warped + (1-union_valid_mask) * feat_current
                         # update mask
-                        mask_prop = self.binary_mask(mask_current*(1-(flow_vaild_mask*(1-mask_prop_valid))))
-                
+                        mask_prop = self.binary_mask(mask_current*(1-(flow_valid_mask*(1-mask_prop_valid))))
+
                 # refine
                 if self.learnable:
                     feat = torch.cat([feat_current, feat_prop, mask_current], dim=1)
@@ -187,7 +187,7 @@ class BidirectionalPropagation(nn.Module):
             outputs = outputs_f
 
         return outputs_b.view(b, -1, c, h, w), outputs_f.view(b, -1, c, h, w), \
-               outputs.view(b, -1, c, h, w), masks_f
+                   outputs.view(b, -1, c, h, w), masks_f
 
 
 class Encoder(nn.Module):
@@ -233,23 +233,22 @@ class Encoder(nn.Module):
 
 
 class deconv(nn.Module):
-    def __init__(self,
-                 input_channel,
-                 output_channel,
-                 kernel_size=3,
-                 padding=0):
+    def __init__(
+            self, input_channel, output_channel,
+            kernel_size=3, padding=0
+        ):
         super().__init__()
-        self.conv = nn.Conv2d(input_channel,
-                              output_channel,
-                              kernel_size=kernel_size,
-                              stride=1,
-                              padding=padding)
+        self.conv = nn.Conv2d(
+            input_channel,  output_channel,
+            kernel_size=kernel_size, stride=1,
+            padding=padding
+        )
 
     def forward(self, x):
-        x = F.interpolate(x,
-                          scale_factor=2,
-                          mode='bilinear',
-                          align_corners=True)
+        x = F.interpolate(
+            x, scale_factor=2,
+            mode='bilinear', align_corners=True
+        )
         return self.conv(x)
 
 
@@ -527,6 +526,4 @@ class Discriminator_2D(BaseNetwork):
         return out
 
 def spectral_norm(module, mode=True):
-    if mode:
-        return _spectral_norm(module)
-    return module
+    return _spectral_norm(module) if mode else module

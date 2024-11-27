@@ -204,7 +204,7 @@ class Trainer:
             writer.add_scalar(name, self.summary[name] / n, self.iteration)
             self.summary[name] = 0
 
-    def load(self):
+    def load(self):  # sourcery skip: low-code-quality
         """Load netG (and netD)."""
         # get the latest checkpoint
         model_path = self.config['save_dir']
@@ -218,7 +218,7 @@ class Trainer:
                 for i in glob.glob(os.path.join(model_path, '*.pth'))
             ]
             ckpts.sort()
-            latest_epoch = ckpts[-1][4:] if len(ckpts) > 0 else None
+            latest_epoch = ckpts[-1][4:] if ckpts else None
 
         if latest_epoch is not None:
             gen_path = os.path.join(model_path,
@@ -253,7 +253,7 @@ class Trainer:
                     print(f'Loading Gen-Net from {gen_path}...')
                 dataG = torch.load(gen_path, map_location=self.config['device'])
                 self.netG.load_state_dict(dataG)
-                
+
                 if dis_path is not None and not self.config['model']['no_dis'] and self.config['model']['load_d']:
                     if self.config['global_rank'] == 0:
                         print(f'Loading Dis-Net from {dis_path}...')
@@ -266,57 +266,57 @@ class Trainer:
                     if not self.config['model']['no_dis'] and self.config['model']['load_d']:
                         self.optimD.load_state_dict(data_opt['optimD'])
                         self.scheD.load_state_dict(data_opt['scheD'])
-            else:
-                if self.config['global_rank'] == 0:
-                    print('Warning: There is no trained model found.'
-                        'An initialized model will be used.')
+            elif self.config['global_rank'] == 0:
+                print('Warning: There is no trained model found.'
+                    'An initialized model will be used.')
 
     def save(self, it):
         """Save parameters every eval_epoch"""
-        if self.config['global_rank'] == 0:
-            # configure path
-            gen_path = os.path.join(self.config['save_dir'],
-                                    f'gen_{it:06d}.pth')
-            dis_path = os.path.join(self.config['save_dir'],
-                                    f'dis_{it:06d}.pth')
-            opt_path = os.path.join(self.config['save_dir'],
-                                    f'opt_{it:06d}.pth')
-            print(f'\nsaving model to {gen_path} ...')
+        if self.config['global_rank'] != 0:
+            return
+        # configure path
+        gen_path = os.path.join(self.config['save_dir'],
+                                f'gen_{it:06d}.pth')
+        dis_path = os.path.join(self.config['save_dir'],
+                                f'dis_{it:06d}.pth')
+        opt_path = os.path.join(self.config['save_dir'],
+                                f'opt_{it:06d}.pth')
+        print(f'\nsaving model to {gen_path} ...')
 
             # remove .module for saving
-            if isinstance(self.netG, torch.nn.DataParallel) or isinstance(self.netG, DDP):
-                netG = self.netG.module
-                if not self.config['model']['no_dis']:
-                    netD = self.netD.module
-            else:
-                netG = self.netG
-                if not self.config['model']['no_dis']:
-                    netD = self.netD
-
-            # save checkpoints
-            torch.save(netG.state_dict(), gen_path)
+        if isinstance(self.netG, (torch.nn.DataParallel, DDP)):
+            netG = self.netG.module
             if not self.config['model']['no_dis']:
-                torch.save(netD.state_dict(), dis_path)
-                torch.save(
-                    {
-                        'epoch': self.epoch,
-                        'iteration': self.iteration,
-                        'optimG': self.optimG.state_dict(),
-                        'optimD': self.optimD.state_dict(),
-                        'scheG': self.scheG.state_dict(),
-                        'scheD': self.scheD.state_dict()
-                    }, opt_path)
-            else:
-                torch.save(
-                    {
-                        'epoch': self.epoch,
-                        'iteration': self.iteration,
-                        'optimG': self.optimG.state_dict(),
-                        'scheG': self.scheG.state_dict()
-                    }, opt_path)
+                netD = self.netD.module
+        else:
+            netG = self.netG
+            if not self.config['model']['no_dis']:
+                netD = self.netD
 
-            latest_path = os.path.join(self.config['save_dir'], 'latest.ckpt')
-            os.system(f"echo {it:06d} > {latest_path}")
+        # save checkpoints
+        torch.save(netG.state_dict(), gen_path)
+        if not self.config['model']['no_dis']:
+            torch.save(netD.state_dict(), dis_path)
+            torch.save(
+                {
+                    'epoch': self.epoch,
+                    'iteration': self.iteration,
+                    'optimG': self.optimG.state_dict(),
+                    'optimD': self.optimD.state_dict(),
+                    'scheG': self.scheG.state_dict(),
+                    'scheD': self.scheD.state_dict()
+                }, opt_path)
+        else:
+            torch.save(
+                {
+                    'epoch': self.epoch,
+                    'iteration': self.iteration,
+                    'optimG': self.optimG.state_dict(),
+                    'scheG': self.scheG.state_dict()
+                }, opt_path)
+
+        latest_path = os.path.join(self.config['save_dir'], 'latest.ckpt')
+        os.system(f"echo {it:06d} > {latest_path}")
 
     def train(self):
         """training entry"""
@@ -347,7 +347,7 @@ class Trainer:
                 break
         print('\nEnd training....')
 
-    def _train_epoch(self, pbar):
+    def _train_epoch(self, pbar):  # sourcery skip: low-code-quality
         """Process input and calculate loss every training epoch"""
         device = self.config['device']
         train_data = self.prefetcher.next()
@@ -489,19 +489,19 @@ class Trainer:
                                           f"valid: {valid_loss.item():.3f}"))
 
                 if self.iteration % self.train_args['log_freq'] == 0:
-                    if not self.config['model']['no_dis']:
-                        logging.info(f"[Iter {self.iteration}] "
-                                     f"d: {dis_loss.item():.4f}; "
-                                     f"hole: {hole_loss.item():.4f}; "
-                                     f"valid: {valid_loss.item():.4f}")
-                    else:
+                    if self.config['model']['no_dis']:
                         logging.info(f"[Iter {self.iteration}] "
                                      f"hole: {hole_loss.item():.4f}; "
                                      f"valid: {valid_loss.item():.4f}")
 
+                    else:
+                        logging.info(f"[Iter {self.iteration}] "
+                                     f"d: {dis_loss.item():.4f}; "
+                                     f"hole: {hole_loss.item():.4f}; "
+                                     f"valid: {valid_loss.item():.4f}")
             # saving models
             if self.iteration % self.train_args['save_freq'] == 0:
-                self.save(int(self.iteration))
+                self.save(self.iteration)
 
             if self.iteration > self.train_args['iterations']:
                 break

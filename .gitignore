@@ -1,10 +1,13 @@
 #############################################################
 Personal
 #############################################################
-.vscode/
+.vscode
 weights
-results/
+results
 dataset
+
+experiments_model
+ProPainter/experiments_model
 
 
 
