@@ -283,24 +283,28 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
     def __getitem__(self, index):
         video_name = self.video_names[index]
         scene, view = video_name.split('/')
-        frames_path = os.path.join(self.video_root, scene, view, 'frames')
         masks_path = os.path.join(self.video_root, scene, view, 'masks')
-        flows_path = os.path.join(self.video_root, scene, view, 'flow')
         wrapped_frames_path = os.path.join(self.video_root, scene, view, 'wrapped_frames')
+        if view == 'left':
+            another_view = 'right'
+        elif view == 'right':
+            another_view = 'left'
+        gt_frames_path = os.path.join(self.video_root, scene, another_view, 'frames')
+        flows_path = os.path.join(self.video_root, scene, another_view, 'flow')
 
         # 抽取索引
         num_frames = self.video_dict[video_name]
         selected_index = self._sample_index(num_frames, self.num_local_frames, self.num_ref_frames)
 
         # 加载帧、掩码和光流
-        frames = []
+        gt_frames = []
         wrapped_frames = []
         masks = []
         flows_f, flows_b = [], []
 
         for idx in selected_index:
             frame_name = self.frame_dict[video_name][idx]
-            img_path = os.path.join(frames_path, frame_name)
+            img_path = os.path.join(gt_frames_path, frame_name)
             mask_path = os.path.join(masks_path, frame_name)
             wrapped_frame_path = os.path.join(wrapped_frames_path, frame_name)  # wrapped_frames 路径
             img_bytes = self.file_client.get(img_path, 'img')
@@ -318,11 +322,11 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
 
             mask = Image.open(mask_path).convert('L').resize(self.size, Image.NEAREST)
 
-            frames.append(img)
+            gt_frames.append(img)
             wrapped_frames.append(wrapped_img)  # 添加 wrapped_frame
             masks.append(mask)
 
-            if len(frames) <= self.num_local_frames - 1 and self.load_flow:
+            if len(gt_frames) <= self.num_local_frames - 1 and self.load_flow:
                 current_frame = frame_name[:-4]
                 next_frame = self.frame_dict[video_name][idx + 1][:-4]
                 flow_f_path = os.path.join(flows_path, f"{current_frame}_{next_frame}_f.flo")
@@ -335,8 +339,8 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
                 flows_b.append(flow_b)
             
             # local frames 随机时序反向
-            if len(frames) == self.num_local_frames and random.random() < 0.5:
-                frames.reverse()
+            if len(gt_frames) == self.num_local_frames and random.random() < 0.5:
+                gt_frames.reverse()
                 wrapped_frames.reverse()  # 同时反向 wrapped_frames
                 masks.reverse()
                 if self.load_flow:
@@ -346,12 +350,12 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
 
         # 数据增强
         if self.load_flow:
-            frames, wrapped_frames, masks, flows_f, flows_b = GroupRandomHorizontalFlowFlipStereo()(frames, wrapped_frames, masks, flows_f, flows_b)
+            gt_frames, wrapped_frames, masks, flows_f, flows_b = GroupRandomHorizontalFlowFlipStereo()(gt_frames, wrapped_frames, masks, flows_f, flows_b)
         else:
-            frames, wrapped_frames, masks = GroupRandomHorizontalFlipStereo()(frames, wrapped_frames, masks)
+            gt_frames, wrapped_frames, masks = GroupRandomHorizontalFlipStereo()(gt_frames, wrapped_frames, masks)
 
         # 转换为张量
-        frame_tensors = self._to_tensors(frames) * 2.0 - 1.0
+        frame_tensors = self._to_tensors(gt_frames) * 2.0 - 1.0
         wrapped_frame_tensors = self._to_tensors(wrapped_frames) * 2.0 - 1.0  # wrapped_frames 转换为张量
         mask_tensors = self._to_tensors(masks)
         if self.load_flow:
