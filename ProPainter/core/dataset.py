@@ -13,7 +13,7 @@ from utils.file_client import FileClient
 from utils.img_util import imfrombytes
 from utils.flow_util import resize_flow, flowread
 from core.utils import (create_random_shape_with_random_motion, Stack,
-                        ToTorchFormatTensor, GroupRandomHorizontalFlip,GroupRandomHorizontalFlowFlip)
+                        ToTorchFormatTensor, GroupRandomHorizontalFlip,GroupRandomHorizontalFlowFlip, GroupRandomHorizontalFlowFlipStereo, GroupRandomHorizontalFlipStereo)
 
 
 class  TrainDataset(torch.utils.data.Dataset):
@@ -346,9 +346,9 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
 
         # 数据增强
         if self.load_flow:
-            frames, wrapped_frames, masks, flows_f, flows_b = GroupRandomHorizontalFlowFlip()(frames, wrapped_frames, masks, flows_f, flows_b)
+            frames, wrapped_frames, masks, flows_f, flows_b = GroupRandomHorizontalFlowFlipStereo()(frames, wrapped_frames, masks, flows_f, flows_b)
         else:
-            frames, wrapped_frames, masks = GroupRandomHorizontalFlip()(frames, wrapped_frames, masks)
+            frames, wrapped_frames, masks = GroupRandomHorizontalFlipStereo()(frames, wrapped_frames, masks)
 
         # 转换为张量
         frame_tensors = self._to_tensors(frames) * 2.0 - 1.0

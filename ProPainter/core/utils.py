@@ -127,6 +127,47 @@ class GroupRandomHorizontalFlip(object):
             return img_group
 
 
+class GroupRandomHorizontalFlowFlipStereo(object):
+    """Randomly horizontally flips the given PIL.Images and flow fields with a probability of 0.5."""
+    
+    def __call__(self, frames, wrapped_frames, masks, flows_f=None, flows_b=None):
+        v = random.random()
+        if v < 0.5:
+            # Flip frames, wrapped_frames, and masks
+            ret_frames = [frame.transpose(Image.FLIP_LEFT_RIGHT) for frame in frames]
+            ret_wrapped_frames = [frame.transpose(Image.FLIP_LEFT_RIGHT) for frame in wrapped_frames]
+            ret_masks = [mask.transpose(Image.FLIP_LEFT_RIGHT) for mask in masks]
+            
+            # Flip flow fields if provided
+            if flows_f is not None and flows_b is not None:
+                ret_flows_f = [flow[:, ::-1] * [-1.0, 1.0] for flow in flows_f]
+                ret_flows_b = [flow[:, ::-1] * [-1.0, 1.0] for flow in flows_b]
+                return ret_frames, ret_wrapped_frames, ret_masks, ret_flows_f, ret_flows_b
+            else:
+                return ret_frames, ret_wrapped_frames, ret_masks
+        else:
+            # No flip
+            if flows_f is not None and flows_b is not None:
+                return frames, wrapped_frames, masks, flows_f, flows_b
+            else:
+                return frames, wrapped_frames, masks
+
+
+class GroupRandomHorizontalFlipStereo(object):
+    """Randomly horizontally flips the given PIL.Images with a probability of 0.5."""
+    
+    def __call__(self, frames, wrapped_frames, masks):
+        v = random.random()
+        if v < 0.5:
+            # Flip frames, wrapped_frames, and masks
+            ret_frames = [frame.transpose(Image.FLIP_LEFT_RIGHT) for frame in frames]
+            ret_wrapped_frames = [frame.transpose(Image.FLIP_LEFT_RIGHT) for frame in wrapped_frames]
+            ret_masks = [mask.transpose(Image.FLIP_LEFT_RIGHT) for mask in masks]
+            return ret_frames, ret_wrapped_frames, ret_masks
+        else:
+            return frames, wrapped_frames, masks
+
+
 class Stack(object):
     def __init__(self, roll=False):
         self.roll = roll
