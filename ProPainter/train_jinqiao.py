@@ -37,7 +37,7 @@ def main(config):
     print(f"[**] create folder {config['save_dir']}")
 
     trainer_version = config['trainer']['version']
-    trainer = core.__dict__[trainer_version].__dict__['Trainer'](config)
+    trainer = core.__dict__[trainer_version].__dict__['TrainerStereo'](config)
     trainer.train()
 
 
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-c',
                         '--config',
-                        default='/root/autodl-tmp/stereo-inpainting/ProPainter/configs/train_propainter.json',
+                        default='/root/autodl-tmp/stereo-inpainting/ProPainter/configs/train_propainter_stereo.json',
                         type=str)
     args = parser.parse_args()
     
