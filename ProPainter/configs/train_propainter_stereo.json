@@ -32,7 +32,7 @@
         "beta1": 0,
         "beta2": 0.99,
         "lr": 1e-4,
-        "batch_size": 2,
+        "batch_size": 4,
         "num_workers": 8,
         "num_prefetch_queue": 8,
         "log_freq": 100,

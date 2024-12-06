@@ -45,7 +45,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-c',
                         '--config',
-                        default='/root/autodl-tmp/stereo-inpainting/ProPainter/configs/train_propainter_stereo.json',
+                        default='configs/train_propainter_stereo.json',
                         type=str)
     args = parser.parse_args()
     
