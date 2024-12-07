@@ -35,7 +35,7 @@ def initialize_pipeline():
 
 def create_processing_dirs(view_path):
     """创建所需的子目录."""
-    return create_dirs(view_path, ['depth', 'wrapped_frames', 'masks'])
+    return create_dirs(view_path, ['depth', 'warpped_frames', 'masks'])
 
 
 def process_frame(image_path, dirs, pipe, view, device="CPU:0"):
@@ -60,18 +60,18 @@ def process_frame(image_path, dirs, pipe, view, device="CPU:0"):
         opposite_view = 'right' if view == 'left' else 'left'
 
         # PCD 构建与重新渲染
-        wrapped_image_array = get_rgb_from_view(
+        warpped_image_array = get_rgb_from_view(
             image, depth_image, view=opposite_view, device=o3d.core.Device(device)
         )
-        wrapped_image = Image.fromarray(wrapped_image_array.astype(np.uint8))
+        warpped_image = Image.fromarray(warpped_image_array.astype(np.uint8))
 
         # 创建掩码
-        mask_array = np.all(wrapped_image_array == 0, axis=-1)
+        mask_array = np.all(warpped_image_array == 0, axis=-1)
         mask_image = Image.fromarray((mask_array * 255).astype(np.uint8))
 
         # 保存结果
         save_image(depth_image, os.path.join(dirs['depth'], os.path.basename(image_path)))
-        save_image(wrapped_image, os.path.join(dirs['wrapped_frames'], os.path.basename(image_path)))
+        save_image(warpped_image, os.path.join(dirs['warpped_frames'], os.path.basename(image_path)))
         save_image(mask_image, os.path.join(dirs['masks'], os.path.basename(image_path)))
 
     except Exception as e:

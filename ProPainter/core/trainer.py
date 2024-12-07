@@ -839,14 +839,14 @@ class TrainerStereo:
         train_data = self.prefetcher.next()
         while train_data is not None:
             self.iteration += 1
-            frames, wrapped_frames, masks, flows_f, flows_b, _ = train_data
-            frames, wrapped_frames, masks = frames.to(device), wrapped_frames.to(device), masks.to(device).float()
+            frames, warpped_frames, masks, flows_f, flows_b, _ = train_data
+            frames, warpped_frames, masks = frames.to(device), warpped_frames.to(device), masks.to(device).float()
             l_t = self.num_local_frames
             b, t, c, h, w = frames.size()
             gt_local_frames = frames[:, :l_t, ...]
             local_masks = masks[:, :l_t, ...].contiguous()
 
-            masked_local_frames = wrapped_frames[:, :l_t, ...]
+            masked_local_frames = warpped_frames[:, :l_t, ...]
             # get gt optical flow
             if flows_f[0] == 'None' or flows_b[0] == 'None':
                 gt_flows_bi = self.fix_raft(gt_local_frames)
@@ -862,7 +862,7 @@ class TrainerStereo:
             prop_imgs, updated_local_masks = self.netG.img_propagation(masked_local_frames, pred_flows_bi, local_masks, interpolation=self.interp_mode)
             updated_masks = masks.clone()
             updated_masks[:, :l_t, ...] = updated_local_masks.view(b, l_t, 1, h, w)
-            updated_frames = wrapped_frames.clone()
+            updated_frames = warpped_frames.clone()
             prop_local_frames = masked_local_frames * (1-local_masks) + prop_imgs.view(b, l_t, 3, h, w) * local_masks # merge
             updated_frames[:, :l_t, ...] = prop_local_frames
 
@@ -873,7 +873,7 @@ class TrainerStereo:
             # get the local frames
             pred_local_frames = pred_imgs[:, :l_t, ...]
             # comp_local_frames = gt_local_frames * (1. - local_masks) +  pred_local_frames * local_masks
-            comp_imgs = wrapped_frames * (1. - masks) + pred_imgs * masks
+            comp_imgs = warpped_frames * (1. - masks) + pred_imgs * masks
 
             gen_loss = 0
             dis_loss = 0

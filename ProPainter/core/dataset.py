@@ -284,7 +284,7 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
         video_name = self.video_names[index]
         scene, view = video_name.split('/')
         masks_path = os.path.join(self.video_root, scene, view, 'masks')
-        wrapped_frames_path = os.path.join(self.video_root, scene, view, 'wrapped_frames')
+        warpped_frames_path = os.path.join(self.video_root, scene, view, 'warpped_frames')
         if view == 'left':
             another_view = 'right'
         elif view == 'right':
@@ -298,7 +298,7 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
 
         # 加载帧、掩码和光流
         gt_frames = []
-        wrapped_frames = []
+        warpped_frames = []
         masks = []
         flows_f, flows_b = [], []
 
@@ -306,24 +306,24 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
             frame_name = self.frame_dict[video_name][idx]
             img_path = os.path.join(gt_frames_path, frame_name)
             mask_path = os.path.join(masks_path, frame_name)
-            wrapped_frame_path = os.path.join(wrapped_frames_path, frame_name)  # wrapped_frames 路径
+            warpped_frame_path = os.path.join(warpped_frames_path, frame_name)  # warpped_frames 路径
             img_bytes = self.file_client.get(img_path, 'img')
             img = imfrombytes(img_bytes, float32=False)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img = cv2.resize(img, self.size, interpolation=cv2.INTER_LINEAR)
             img = Image.fromarray(img)
             
-            # 加载 wrapped_frame
-            wrapped_img_bytes = self.file_client.get(wrapped_frame_path, 'img')
-            wrapped_img = imfrombytes(wrapped_img_bytes, float32=False)
-            wrapped_img = cv2.cvtColor(wrapped_img, cv2.COLOR_BGR2RGB)
-            wrapped_img = cv2.resize(wrapped_img, self.size, interpolation=cv2.INTER_LINEAR)
-            wrapped_img = Image.fromarray(wrapped_img)
+            # 加载 warpped_frame
+            warpped_img_bytes = self.file_client.get(warpped_frame_path, 'img')
+            warpped_img = imfrombytes(warpped_img_bytes, float32=False)
+            warpped_img = cv2.cvtColor(warpped_img, cv2.COLOR_BGR2RGB)
+            warpped_img = cv2.resize(warpped_img, self.size, interpolation=cv2.INTER_LINEAR)
+            warpped_img = Image.fromarray(warpped_img)
 
             mask = Image.open(mask_path).convert('L').resize(self.size, Image.NEAREST)
 
             gt_frames.append(img)
-            wrapped_frames.append(wrapped_img)  # 添加 wrapped_frame
+            warpped_frames.append(warpped_img)  # 添加 warpped_frame
             masks.append(mask)
 
             if len(gt_frames) <= self.num_local_frames - 1 and self.load_flow:
@@ -341,7 +341,7 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
             # local frames 随机时序反向
             if len(gt_frames) == self.num_local_frames and random.random() < 0.5:
                 gt_frames.reverse()
-                wrapped_frames.reverse()  # 同时反向 wrapped_frames
+                warpped_frames.reverse()  # 同时反向 warpped_frames
                 masks.reverse()
                 if self.load_flow:
                     flows_f.reverse()
@@ -350,13 +350,13 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
 
         # 数据增强
         if self.load_flow:
-            gt_frames, wrapped_frames, masks, flows_f, flows_b = GroupRandomHorizontalFlowFlipStereo()(gt_frames, wrapped_frames, masks, flows_f, flows_b)
+            gt_frames, warpped_frames, masks, flows_f, flows_b = GroupRandomHorizontalFlowFlipStereo()(gt_frames, warpped_frames, masks, flows_f, flows_b)
         else:
-            gt_frames, wrapped_frames, masks = GroupRandomHorizontalFlipStereo()(gt_frames, wrapped_frames, masks)
+            gt_frames, warpped_frames, masks = GroupRandomHorizontalFlipStereo()(gt_frames, warpped_frames, masks)
 
         # 转换为张量
         frame_tensors = self._to_tensors(gt_frames) * 2.0 - 1.0
-        wrapped_frame_tensors = self._to_tensors(wrapped_frames) * 2.0 - 1.0  # wrapped_frames 转换为张量
+        warpped_frame_tensors = self._to_tensors(warpped_frames) * 2.0 - 1.0  # warpped_frames 转换为张量
         mask_tensors = self._to_tensors(masks)
         if self.load_flow:
             flows_f = np.stack(flows_f, axis=-1)  # H, W, 2, T-1
@@ -366,6 +366,6 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
 
         # 返回张量
         if self.load_flow:
-            return frame_tensors, wrapped_frame_tensors, mask_tensors, flows_f, flows_b, video_name
+            return frame_tensors, warpped_frame_tensors, mask_tensors, flows_f, flows_b, video_name
         else:
-            return frame_tensors, wrapped_frame_tensors, mask_tensors, None, None, video_name
+            return frame_tensors, warpped_frame_tensors, mask_tensors, None, None, video_name
