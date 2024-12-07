@@ -144,7 +144,7 @@ def preprocess_and_save(input_dir, debug=False):
 
 def main():
     parser = argparse.ArgumentParser(description="Preprocess and save dataset.")
-    parser.add_argument("input_dir", type=str, help="Path to the input dataset directory.")
+    parser.add_argument("--input_dir", "-i", type=str, help="Path to the input dataset directory.")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode.")
 
     args = parser.parse_args()
