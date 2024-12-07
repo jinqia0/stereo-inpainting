@@ -13,12 +13,12 @@
         "load_flow": 1
     },
     "losses": {
-        "hole_weight": 1,
-        "valid_weight": 1,
-        "flow_weight": 1,
-        "adversarial_weight": 0.01,
+        "hole_weight": 0.1,
+        "valid_weight": 0.1,
+        "flow_weight": 0.1,
+        "adversarial_weight": 1,
         "GAN_LOSS": "hinge",
-        "perceptual_weight": 0
+        "perceptual_weight": 0.1
     },
     "model": {
         "net": "propainter",
@@ -32,7 +32,7 @@
         "beta1": 0,
         "beta2": 0.99,
         "lr": 1e-4,
-        "batch_size": 4,
+        "batch_size": 2,
         "num_workers": 8,
         "num_prefetch_queue": 8,
         "log_freq": 100,
