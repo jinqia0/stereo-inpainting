@@ -1,22 +1,22 @@
 {
-    "seed": 2023,
+    "seed": 2024,
     "save_dir": "experiments_model/",
     "distributed": 0,
     "global_rank": 0,
     "train_data_loader": {
         "name": "Monkaa",
-        "video_root": "../dataset/Monkaa",
+        "video_root": "../dataset/kitti/train",
         "w": 432,
         "h": 240,
-        "num_local_frames": 10, 
-        "num_ref_frames": 6,
+        "num_local_frames": 6, 
+        "num_ref_frames": 4,
         "load_flow": 1
     },
     "losses": {
-        "hole_weight": 0.1,
-        "valid_weight": 0.1,
-        "flow_weight": 0.1,
-        "adversarial_weight": 1,
+        "hole_weight": 1,
+        "valid_weight": 1,
+        "flow_weight": 1,
+        "adversarial_weight": 0.01,
         "GAN_LOSS": "hinge",
         "perceptual_weight": 0.1
     },

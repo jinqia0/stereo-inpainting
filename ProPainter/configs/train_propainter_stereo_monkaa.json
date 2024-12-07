@@ -1,0 +1,49 @@
+{
+    "seed": 2023,
+    "save_dir": "experiments_model/",
+    "distributed": 0,
+    "global_rank": 0,
+    "train_data_loader": {
+        "name": "Monkaa",
+        "video_root": "../dataset/Monkaa/train",
+        "w": 432,
+        "h": 240,
+        "num_local_frames": 10, 
+        "num_ref_frames": 6,
+        "load_flow": 1
+    },
+    "losses": {
+        "hole_weight": 0.1,
+        "valid_weight": 0.1,
+        "flow_weight": 0.1,
+        "adversarial_weight": 1,
+        "GAN_LOSS": "hinge",
+        "perceptual_weight": 0.1
+    },
+    "model": {
+        "net": "propainter",
+        "no_dis": 0,
+        "load_d": 1,
+        "interp_mode": "nearest"
+    },
+    "trainer": {
+        "version": "trainer",
+        "type": "Adam",
+        "beta1": 0,
+        "beta2": 0.99,
+        "lr": 1e-4,
+        "batch_size": 2,
+        "num_workers": 8,
+        "num_prefetch_queue": 8,
+        "log_freq": 100,
+        "save_freq": 2e3,
+        "iterations": 200e3,
+        "scheduler": {
+            "type": "MultiStepLR",
+            "milestones": [
+                100e3
+            ],
+            "gamma": 0.1
+        }
+    }
+}
