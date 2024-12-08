@@ -522,11 +522,11 @@ class TrainerStereo:
 
         self.train_sampler = None
         self.train_args = config['trainer']
-        # if config['distributed']:
-        #     self.train_sampler = DistributedSampler(
-        #         self.train_dataset,
-        #         num_replicas=config['world_size'],
-        #         rank=config['global_rank'])
+        if config['distributed']:
+            self.train_sampler = DistributedSampler(
+                self.train_dataset,
+                num_replicas=config['world_size'],
+                rank=config['global_rank'])
 
         dataloader_args = dict(
             dataset=self.train_dataset,
@@ -859,7 +859,7 @@ class TrainerStereo:
             # pred_flows_bi = gt_flows_bi
 
             # ---- image propagation ----
-            prop_imgs, updated_local_masks = self.netG.img_propagation(masked_local_frames, pred_flows_bi, local_masks, interpolation=self.interp_mode)
+            prop_imgs, updated_local_masks = self.netG.module.img_propagation(masked_local_frames, pred_flows_bi, local_masks, interpolation=self.interp_mode)
             updated_masks = masks.clone()
             updated_masks[:, :l_t, ...] = updated_local_masks.view(b, l_t, 1, h, w)
             updated_frames = warpped_frames.clone()

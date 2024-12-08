@@ -1,7 +1,7 @@
 {
     "seed": 2024,
     "save_dir": "experiments_model/",
-    "distributed": 0,
+    "distributed": 1,
     "global_rank": 0,
     "train_data_loader": {
         "name": "Monkaa",
@@ -18,7 +18,7 @@
         "flow_weight": 1,
         "adversarial_weight": 0.01,
         "GAN_LOSS": "hinge",
-        "perceptual_weight": 0.1
+        "perceptual_weight": 0.01
     },
     "model": {
         "net": "propainter",
@@ -32,12 +32,12 @@
         "beta1": 0,
         "beta2": 0.99,
         "lr": 1e-4,
-        "batch_size": 2,
+        "batch_size": 8,
         "num_workers": 8,
         "num_prefetch_queue": 8,
         "log_freq": 100,
-        "save_freq": 2e3,
-        "iterations": 200e3,
+        "save_freq": 1e3,
+        "iterations": 100e3,
         "scheduler": {
             "type": "MultiStepLR",
             "milestones": [

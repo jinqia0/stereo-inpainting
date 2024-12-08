@@ -71,7 +71,7 @@ def main_worker(rank, config):
         print(f"[**] create folder {config['save_dir']}")
 
     trainer_version = config['trainer']['version']
-    trainer = core.__dict__[trainer_version].__dict__['Trainer'](config)
+    trainer = core.__dict__[trainer_version].__dict__['TrainerStereo'](config)
     # Trainer(config)
     trainer.train()
 
