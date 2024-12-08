@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import sys 
-sys.path.append("/root/autodl-tmp/stereo-inpainting/ProPainter")
-sys.path.append("/root/autodl-tmp/stereo-inpainting") 
-
 import os
+
+# 添加 ProPainter 的根目录到 sys.path
+sys.path.append('/home/jinqiao/stereo-inpainting/ProPainter')
+
 import cv2
 import argparse
 from PIL import Image
