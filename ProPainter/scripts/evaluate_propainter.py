@@ -81,21 +81,19 @@ def main_worker(args):
         if not os.path.exists(result_path):
             os.makedirs(result_path, exist_ok=True)        
 
-    if not os.path.exists(result_path):
-        os.makedirs(result_path)
-        
+    # if not os.path.exists(result_path):
+    #     os.makedirs(result_path)
         
     for index, items in enumerate(test_loader):
         torch.cuda.empty_cache()
 
         # frames, masks, video_name, frames_PIL = items
-        frames, masks, flows_f, flows_b, video_name, frames_PIL = items
+        frames, masks, warpped_frames, flows_f, flows_b, video_name, frames_PIL = items
         video_name = video_name[0]
         print('Processing:', video_name)
 
         video_length = frames.size(1)
-        frames, masks = frames.to(device), masks.to(device)
-        masked_frames = frames * (1 - masks)
+        frames, masks, warpped_frames = frames.to(device), masks.to(device), warpped_frames.to(device)
 
         torch.cuda.synchronize()
         time_start = time()
@@ -128,11 +126,11 @@ def main_worker(args):
             pred_flows_bi = fix_flow_complete.combine_flow(gt_flows_bi, pred_flows_bi, masks)
         
             # ---- temporal propagation ----
-            prop_imgs, updated_local_masks = model.img_propagation(masked_frames, pred_flows_bi, masks, 'nearest')
+            prop_imgs, updated_local_masks = model.img_propagation(warpped_frames, pred_flows_bi, masks, 'nearest')
 
             b, t, _, _, _ = masks.size()
             updated_masks = updated_local_masks.view(b, t, 1, h, w)
-            updated_frames = frames * (1-masks) + prop_imgs.view(b, t, 3, h, w) * masks # merge
+            updated_frames = warpped_frames * (1-masks) + prop_imgs.view(b, t, 3, h, w) * masks # merge
             
             del gt_flows_bi, frames, updated_local_masks
             if not args.load_flow:
@@ -275,6 +273,7 @@ if __name__ == '__main__':
     parser.add_argument('--load_flow', default=False, type=bool)
     parser.add_argument('--save_results', action='store_true')
     parser.add_argument('--num_workers', default=4, type=int)
+    parser.add_argument('--view', choices=['left', 'right', 'random'], default='random', type=str)
 
     args = parser.parse_args()
     main_worker(args)
