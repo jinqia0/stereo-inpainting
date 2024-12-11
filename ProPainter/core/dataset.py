@@ -290,7 +290,7 @@ class TrainDatasetStereo(torch.utils.data.Dataset):
         elif view == 'right':
             another_view = 'left'
         gt_frames_path = os.path.join(self.video_root, scene, another_view, 'frames')
-        flows_path = os.path.join(self.video_root, scene, view, 'flow')
+        flows_path = os.path.join(self.video_root, scene, view, 'warpped_flow')
 
         # 抽取索引
         num_frames = self.video_dict[video_name]

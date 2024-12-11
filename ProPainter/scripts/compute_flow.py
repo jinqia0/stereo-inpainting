@@ -46,8 +46,8 @@ def process_frames_in_view(view_path, RAFT_model, device, h_new, w_new):
         device: Processing device (e.g., 'cuda').
         h_new, w_new (int): Resized height and width.
     """
-    frames_path = os.path.join(view_path, 'frames')
-    flow_path = os.path.join(view_path, 'flow')
+    frames_path = os.path.join(view_path, 'warpped_frames')
+    flow_path = os.path.join(view_path, 'warpped_flow')
 
     os.makedirs(flow_path, exist_ok=True)
 
