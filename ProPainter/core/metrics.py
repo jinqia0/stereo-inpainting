@@ -1,5 +1,5 @@
 import numpy as np
-from skimage import measure
+from skimage import metrics
 from scipy import linalg
 
 import torch
@@ -41,17 +41,28 @@ def calc_psnr_and_ssim(img1, img2):
         img1: ndarray, range [0, 255]
         img2: ndarray, range [0, 255]
     """
+    import numpy as np
+    from skimage.metrics import structural_similarity
+
     img1 = img1.astype(np.float64)
     img2 = img2.astype(np.float64)
 
     psnr = calculate_psnr(img1, img2)
-    ssim = measure.compare_ssim(img1,
-                                img2,
-                                data_range=255,
-                                multichannel=True,
-                                win_size=65)
+
+    # Dynamically adjust win_size based on image size
+    min_side = min(img1.shape[:2])
+    win_size = min(65, min_side // 2 * 2 + 1)
+
+    ssim = structural_similarity(
+        img1,
+        img2,
+        data_range=255,
+        channel_axis=-1,
+        win_size=win_size
+    )
 
     return psnr, ssim
+
 
 
 ###########################

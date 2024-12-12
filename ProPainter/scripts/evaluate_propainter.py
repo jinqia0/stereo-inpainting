@@ -17,7 +17,7 @@ from model.recurrent_flow_completion import RecurrentFlowCompleteNet
 from model.propainter import InpaintGenerator
 
 # from core.dataset import TestDataset
-from core.dataset import TestDataset
+from core.dataset import TestDataset, TestDatasetStereo
 from core.metrics import calc_psnr_and_ssim, calculate_i3d_activations, calculate_vfid, init_i3d_model
 
 from time import time
@@ -37,10 +37,8 @@ def get_ref_index(neighbor_ids, length, ref_stride=10):
 def main_worker(args):
     args.size = (args.width, args.height)
     w, h = args.size    
-    # set up datasets and data loader
-    assert (args.dataset == 'davis') or args.dataset == 'youtube-vos', \
-        f"{args.dataset} dataset is not supported"
-    test_dataset = TestDataset(vars(args))
+
+    test_dataset = TestDatasetStereo(vars(args))
 
     test_loader = DataLoader(test_dataset,
                              batch_size=1,
@@ -66,10 +64,10 @@ def main_worker(args):
     print('Start evaluation ...')
     if args.task == 'video_completion':
         result_path = os.path.join(f'results_eval', 
-            f'{args.dataset}_rs_{args.ref_stride}_nl_{args.neighbor_length}_video_completion')
+            f'{args.out_prefix}_rs_{args.ref_stride}_nl_{args.neighbor_length}_video_completion')
         if not os.path.exists(result_path):
             os.makedirs(result_path, exist_ok=True)
-        eval_summary = open(os.path.join(result_path, f"{args.dataset}_metrics.txt"),"w")
+        eval_summary = open(os.path.join(result_path, f"{args.out_prefix}_metrics.txt"),"w")
         total_frame_psnr = []
         total_frame_ssim = []
         output_i3d_activations = []
@@ -77,7 +75,7 @@ def main_worker(args):
         i3d_model = init_i3d_model('weights/i3d_rgb_imagenet.pt')
     else:
         result_path = os.path.join(f'results_eval', 
-            f'{args.dataset}_rs_{args.ref_stride}_nl_{args.neighbor_length}_object_removal')
+            f'{args.out_prefix}_rs_{args.ref_stride}_nl_{args.neighbor_length}_object_removal')
         if not os.path.exists(result_path):
             os.makedirs(result_path, exist_ok=True)        
 
@@ -87,7 +85,7 @@ def main_worker(args):
     for index, items in enumerate(test_loader):
         torch.cuda.empty_cache()
 
-        # frames, masks, video_name, frames_PIL = items
+        # frames, masks, warpped_frames, video_name, frames_PIL = items
         frames, masks, warpped_frames, flows_f, flows_b, video_name, frames_PIL = items
         video_name = video_name[0]
         print('Processing:', video_name)
@@ -259,14 +257,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--height', type=int, default=240)
     parser.add_argument('--width', type=int, default=432)
-    parser.add_argument("--ref_stride", type=int, default=10)
-    parser.add_argument("--neighbor_length", type=int, default=20)
+    parser.add_argument("--ref_stride", type=int, default=6)
+    parser.add_argument("--neighbor_length", type=int, default=10)
     parser.add_argument("--raft_iter", type=int, default=20)
     parser.add_argument('--task', default='video_completion', choices=['object_removal', 'video_completion'])
     parser.add_argument('--raft_model_path', default='weights/raft-things.pth', type=str)
     parser.add_argument('--fc_model_path', default='weights/recurrent_flow_completion.pth', type=str)
     parser.add_argument('--propainter_model_path', default='weights/ProPainter.pth', type=str)
-    parser.add_argument('--dataset', choices=['davis', 'youtube-vos'], type=str)
+    parser.add_argument('--out_prefix', type=str)
     parser.add_argument('--video_root', default='dataset_root', type=str)
     parser.add_argument('--mask_root', default='mask_root', type=str)
     parser.add_argument('--flow_root', default='flow_ground_truth_root', type=str)

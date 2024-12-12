@@ -10,8 +10,8 @@ Datasets
 experiments_model
 ProPainter/experiments_model
 ProPainter/weights
-
-
+ProPainter/results_eval
+ProPainter/evaluation_results
 
 #############################################################
 Python Common
