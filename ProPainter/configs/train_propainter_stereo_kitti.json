@@ -16,9 +16,9 @@
         "hole_weight": 1,
         "valid_weight": 1,
         "flow_weight": 1,
-        "adversarial_weight": 0.01,
+        "adversarial_weight": 0,
         "GAN_LOSS": "hinge",
-        "perceptual_weight": 1
+        "perceptual_weight": 0.01
     },
     "model": {
         "net": "propainter",
@@ -31,7 +31,7 @@
         "type": "Adam",
         "beta1": 0,
         "beta2": 0.99,
-        "lr": 1e-4,
+        "lr": 1e-2,
         "batch_size": 8,
         "num_workers": 8,
         "num_prefetch_queue": 8,

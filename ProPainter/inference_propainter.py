@@ -213,6 +213,10 @@ if __name__ == '__main__':
         '--save_frames', action='store_true', help='Save output frames. Default: False')
     parser.add_argument(
         '--fp16', action='store_true', help='Use fp16 (half precision) during inference. Default: fp32 (single precision).')
+    parser.add_argument(
+        "--inpainter_path", type=str, default='', help='Path of local inpainter model weight.')
+    parser.add_argument(
+        "--video_name", type=str, default='', help='Name of outpout subfolder.')
 
     args = parser.parse_args()
 
@@ -230,6 +234,9 @@ if __name__ == '__main__':
     frames, size, out_size = resize_frames(frames, size)
     
     fps = args.save_fps if fps is None else fps
+    
+    if args.video_name:
+        video_name = args.video_name
     save_root = os.path.join(args.output, video_name)
     if not os.path.exists(save_root):
         os.makedirs(save_root, exist_ok=True)
@@ -286,7 +293,10 @@ if __name__ == '__main__':
     ##############################################
     # set up ProPainter model
     ##############################################
-    ckpt_path = load_file_from_url(url=os.path.join(pretrain_model_url, 'ProPainter.pth'), 
+    if args.inpainter_path:
+        ckpt_path = args.inpainter_path
+    else:
+        ckpt_path = load_file_from_url(url=os.path.join(pretrain_model_url, 'ProPainter.pth'), 
                                     model_dir='weights', progress=True, file_name=None)
     model = InpaintGenerator(model_path=ckpt_path).to(device)
     model.eval()
